@@ -44,6 +44,15 @@ jobs:
           export CCACHE_EXEC=/usr/bin/ccache
           ccache -M ${CCACHE_SIZE}
 
+      - name: Обновляем repo до последней версии
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo 'export PATH=~/bin:$PATH' >> ~/.bashrc
+          source ~/.bashrc
+          repo version  # Проверяем обновление
+
       - name: Клонируем LineageOS в `lineage-source`
         run: |
           mkdir -p ~/android/lineage
