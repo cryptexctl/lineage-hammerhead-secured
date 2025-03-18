@@ -1,0 +1,33 @@
+name: Update LineageOS Source (aka G(it), L(ineage remote), M(erge), U(pload))
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  
+  workflow_dispatch:  
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout репозиторий
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  
+
+      - name: Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: LineageOS remote
+        run: |
+          git remote add lineage https://github.com/LineageOS/android.git || true
+          git fetch lineage lineage-21.0 --depth=1
+
+      - name: Merge
+        run: |
+          git merge --no-edit lineage/lineage-21.0 || echo "No changes to merge"
+
+      - name: Upload
+        run: |
+          git push origin main || echo "No updates to push"
