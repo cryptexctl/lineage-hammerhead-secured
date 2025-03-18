@@ -3,22 +3,30 @@ name: Build LineageOS GSI
 on:
   workflow_dispatch:  # Запуск вручную
 
-env:
-  ANDROID_VERSION: "22.1"  
-  DEVICE: "gsi_arm64-ab"   
-  BRANCH: "lineage-${{ env.ANDROID_VERSION }}" 
-  USE_CCACHE: "1"  
-  CCACHE_SIZE: "60G"  
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_VERSION: "22.1"  
+      DEVICE: "gsi_arm64-ab"   
+      BRANCH: "lineage-22.1"  # Используем напрямую
+      USE_CCACHE: "1"  
+      CCACHE_SIZE: "60G"  
+
     steps:
       - name: Checkout репозиторий
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Проверяем переменные среды
+        run: |
+          echo "ANDROID_VERSION=${ANDROID_VERSION}"
+          echo "DEVICE=${DEVICE}"
+          echo "BRANCH=${BRANCH}"
+          echo "USE_CCACHE=${USE_CCACHE}"
+          echo "CCACHE_SIZE=${CCACHE_SIZE}"
 
       - name: Устанавливаем зависимости
         run: |
@@ -32,22 +40,22 @@ jobs:
 
       - name: Включаем CCache
         run: |
-          export USE_CCACHE=${{ env.USE_CCACHE }}
+          export USE_CCACHE=${USE_CCACHE}
           export CCACHE_EXEC=/usr/bin/ccache
-          ccache -M ${{ env.CCACHE_SIZE }}
+          ccache -M ${CCACHE_SIZE}
 
       - name: Клонируем LineageOS в `lineage-source`
         run: |
           mkdir -p ~/android/lineage
           cd ~/android/lineage
-          repo init -u https://github.com/LineageOS/android.git -b ${{ env.BRANCH }} --git-lfs
+          repo init -u https://github.com/LineageOS/android.git -b ${BRANCH} --git-lfs
           repo sync -j$(nproc)
 
       - name: Подготавливаем GSI
         run: |
           cd ~/android/lineage
           source build/envsetup.sh
-          lunch lineage_${{ env.DEVICE }}-userdebug
+          lunch lineage_${DEVICE}-userdebug
 
       - name: Запускаем сборку GSI
         run: |
@@ -58,4 +66,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: lineage-gsi
-          path: ~/android/lineage/out/target/product/${{ env.DEVICE }}/system.img
+          path: ~/android/lineage/out/target/product/${DEVICE}/system.img
