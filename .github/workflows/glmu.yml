@@ -29,10 +29,23 @@ jobs:
         run: |
           git merge --no-edit lineage/lineage-22.1 || echo "No changes to merge"
 
+      - name: Проверяем статус перед пушем
+        run: |
+          git status
+          git log -1
+          git remote -v
+
       - name: Аутентификация перед пушем
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
+          git config --global --add safe.directory /github/workspace
 
-      - name: Upload
+      - name: Upload (push only if changes exist)
         run: |
-          git push origin main || echo "No updates to push"
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No updates to push"
+          else
+            git push origin main --verbose
+          fi
