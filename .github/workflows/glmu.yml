@@ -2,14 +2,14 @@ name: Update LineageOS Source (aka G(it), L(ineage remote), M(erge), U(pload))
 
 on:
   schedule:
-    - cron: '0 2 * * *'  
-  workflow_dispatch:  
+    - cron: '0 2 * * *'  # Запуск каждый день в 02:00 UTC
+  workflow_dispatch:  # Возможность запуска вручную
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout репозиторий
+      - name: Checkout репозиторий (основной)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0  
@@ -20,32 +20,24 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: LineageOS remote
+      - name: Клонируем LineageOS в `lineage-source`
         run: |
-          git remote add lineage https://github.com/LineageOS/android.git || true
-          git fetch lineage lineage-22.1 --depth=1
+          rm -rf lineage-source  # Удаляем старые файлы
+          git clone --depth=1 https://github.com/LineageOS/android.git lineage-source
 
-      - name: Merge
+      - name: Настраиваем LineageOS Git
         run: |
-          git merge --no-edit lineage/lineage-22.1 || echo "No changes to merge"
+          cd lineage-source
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}/lineage-source.git
+          git config --global --add safe.directory $PWD
 
-      - name: Проверяем статус перед пушем
+      - name: Пушим изменения в `lineage-source`
         run: |
-          git status
-          git log -1
-          git remote -v
-
-      - name: Аутентификация перед пушем
-        run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
-          git config --global --add safe.directory /github/workspace
-
-      - name: Upload (push only if changes exist)
-        run: |
+          cd lineage-source
           if git diff --quiet && git diff --staged --quiet; then
             echo "No updates to push"
           else
+            git add .
+            git commit -m "Auto-update LineageOS"
             git push origin main --verbose
           fi
