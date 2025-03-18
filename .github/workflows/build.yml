@@ -55,10 +55,10 @@ jobs:
 
       - name: Клонируем LineageOS в `lineage-source`
         run: |
-          mkdir -p ~/android/lineage
-          cd ~/android/lineage
-          repo init -u https://github.com/LineageOS/android.git -b ${BRANCH} --git-lfs
-          repo sync -j$(nproc) || (echo "Ошибка при repo sync, пробуем снова..." && sleep 10 && repo sync -j1)
+         mkdir -p ~/android/lineage
+         cd ~/android/lineage
+         ~/bin/repo init -u https://github.com/LineageOS/android.git -b ${BRANCH} --git-lfs
+         ~/bin/repo sync -j$(nproc) --no-clone-bundle --no-tags || (echo "Ошибка при repo sync, пробуем снова..." && sleep 10 && ~/bin/repo sync -j1)
 
       - name: Подготавливаем GSI
         run: |
